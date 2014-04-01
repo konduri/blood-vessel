@@ -1,0 +1,6 @@
+The matched fitler works well, but needs a lot of tuning and setting up of parameters. Look into automatic thresholds and probing.
+
+false positives near the bottom right where a lot of light is present. Need to overcome that
+
+Look into machine learning techniques
+
