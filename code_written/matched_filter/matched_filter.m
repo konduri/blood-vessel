@@ -2,16 +2,17 @@ close all
 clc
 
 im =  imread('../flow.png');
+% im = imread('../Input.bmp');
 im =  rgb2gray(im);
 
-threshold   = 35;   %chosen based on results needs improvement
-L           = 8;        %from paper http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=34715&tag=1
-sigma       = 2.5:0.5:3.5;        
+threshold   = 30;   %chosen based on results needs improvement
+L           = 6;        %from paper http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=34715&tag=1
+sigma       = 2:0.5:3.5;        
 mean_filter = fspecial('average', [4 4]); %to remove noise
 
 
-% imshow(im);
-im  = imfilter(im, mean_filter);
+% imshow(im)
+% im  = imfilter(im, mean_filter);
 % imshow(im)
 
 % gaus   = [0 4 3 2 1 -2 -5 -6 -5 -2 1 2 3 4 0]/110;
@@ -26,12 +27,12 @@ filtered    = zeros([size_img no_filters]); %filter and store result
 for k = 1:length(sigma)
     gaus  = fspecial('gaussian',[1 16], sigma(k));
     gaus = -gaus + mean(gaus);
-    gaus  = repmat(gaus,9,1);
+    gaus  = repmat(gaus,L,1);
     gaus_filter = gaus;
 
 
     for i = 1:no_filters
-        filtered(:,:,(k-1)*no_filters + i) = imfilter(im,imrotate(gaus_filter,(i-1)*15));
+        filtered(:,:,(k-1)*no_filters + i) = imfilter(im,imrotate(gaus_filter,(i-1)*15 + 90));
     end
 
 
@@ -63,6 +64,6 @@ imshow(vessel);
 %  vessel = vessel;
 
 
-%  imshow(vessel)
- BW2 = bwareaopen(vessel,100);
+% %  imshow(vessel)
+ BW2 = bwareaopen(vessel,150);
  imshow(BW2)
