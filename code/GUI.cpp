@@ -7,6 +7,7 @@
 
 #define PI 3.1416
 
+
 #include <ros/ros.h>
 #include <image_transport/image_transport.h>
 #include <cv_bridge/cv_bridge.h>
@@ -27,7 +28,7 @@ cv_bridge::CvImagePtr cv_ptr,cv_ptr2;
 
 bttnState bttn;
 
-
+//we define sliders for GUI
 /////////////////////////////////////////
 int slider1;
 int slider2;
