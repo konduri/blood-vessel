@@ -49,7 +49,8 @@ class Tag_follow_class
 		bool joy_automode;		// the flag we use to keep track of the state we are in ,{Manual or Autonomous}
 		bool tag_in_sight;		// keeps track of whether the tag is visible in the 'navdata' message coming in from AR Drone
 		bool LANDING_FLAG;		// TODO: Verify why this fails. Checked when landing command is to be given
-		
+		bool joy_manual_mode;
+
 		float goal_x, goal_y, goal_yaw,SET_HEIGHT;		// the goal positon for our PID, in our case the center of image (320,160,0)
 		
 		void joy_callback(const sensor_msgs::Joy::ConstPtr& msg);
@@ -75,7 +76,7 @@ class Tag_follow_class
 		void configCallback(ardrone_tagfollow::dynamicConfig &config, uint32_t level);
 };
 
-Tag_follow_class::Tag_follow_class():joy_automode(true)
+Tag_follow_class::Tag_follow_class()
 {
 	ROS_INFO("Tag_follow start");
     cout  << "We are in the constructor of the class \n";
@@ -96,11 +97,11 @@ Tag_follow_class::Tag_follow_class():joy_automode(true)
 	/*****************************************************************/
 
 	//this->t_last = ros::Time::now();
-	t_prev_tag = -10;
-	tag_in_sight = false;
-
-	LANDING_FLAG = false;
-	
+	t_prev_tag      = -10;
+	tag_in_sight    = false;
+	LANDING_FLAG    = false;
+	joy_manual_mode = false;
+	joy_automode    = true;
 	this->twist_auto.linear.x  = this->twist_auto.linear.y  = this->twist_auto.linear.z  = 0;
 	this->twist_auto.angular.x = this->twist_auto.angular.y = this->twist_auto.angular.z = 0; 
 	
@@ -112,17 +113,28 @@ Tag_follow_class::Tag_follow_class():joy_automode(true)
  
 void Tag_follow_class::joy_callback(const sensor_msgs::Joy::ConstPtr& msg) 
 {
-	if (msg->buttons[4] == 1) 		// TODO : Give a nice name to this button index
+	if (msg->buttons[4] == 1) 		// top left button on joystick
 	{
-		if (this->joy_automode) 
+		if (!this->joy_automode) 
 		{
-			this->joy_automode = false;
+			this->joy_automode = true;
 			//cout << "We have now entered manual mode" << endl;
 		}
+		this -> joy_manual_mode = false;
+	}
+
+	if (msg->buttons[2] == 1) 		// X button for manual mode
+	{
+		if (!this->joy_manual_mode) 
+		{
+			this->joy_manual_mode = true;
+			//cout << "We have now entered manual mode" << endl;
+		}
+		this -> joy_automode = false;
 	}
 
 	// write here the part for the landing funtion FLAG
-	if(msg->buttons[5] == 1)  		// RB button on the joystick. TODO : Verify the button functionality
+	if(msg->buttons[5] == 1)  		// top right button on joystick
 	{ 
 		if(!this-> LANDING_FLAG)
 		{
@@ -131,7 +143,7 @@ void Tag_follow_class::joy_callback(const sensor_msgs::Joy::ConstPtr& msg)
 		}
 	}
 
-	if(msg->buttons[0] == 1)  		// RB button on the joystick. TODO : Verify the button functionality
+	if(msg->buttons[0] == 1)  		// button A on joystick
 	{ 
 		if(this-> LANDING_FLAG)
 		{
@@ -155,7 +167,7 @@ void Tag_follow_class::nav_callback(const ardrone_autonomy::NavdataConstPtr& nav
 		this->ugv_yaw = this->thrust_kd;
 		//******************************************
 		this->tag_in_sight       = true;
-		this->joy_automode       = true;
+		//this->joy_automode       = true;
 		this->error[errorIdxX]   = 500 - float_t(nav_msg->tags_yc[0]);		// y in image is along x-direction of motion
 		this->error[errorIdxY]   = 500 - float_t(nav_msg->tags_xc[0]);		// x in image is along y-direction of motion
 		//	this->error[errorIdxYaw] = 270 - float_t(nav_msg->tags_orientation[0]);//*******************changed to
@@ -216,13 +228,13 @@ void Tag_follow_class::Rosaria_pose_callback(const geometry_msgs::Twist::ConstPt
 
 void Tag_follow_class::publishtwist()
 {
-	if(joy_automode)
+	if(this -> joy_automode && this -> tag_in_sight) 
 	{
 		vel_pub.publish(twist_auto);
 		err_pub.publish(twist_error);
 		//cout<< "auto mode " << endl;
 	}
-	else if(!joy_automode)
+	else if (this -> joy_manual_mode )
 	{
 		vel_pub.publish(twist_manual);
 		err_pub.publish(twist_error);
