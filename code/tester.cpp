@@ -46,8 +46,8 @@ class Tag_follow_class
 		double vel_x_kp, vel_x_kd, vel_y_kp, vel_y_kd, yaw_kp, yaw_kd, thrust_kp, thrust_kd; // parameters for the pid controls
 		
 		void pidcontroller();
-		float  error[4],error_prev[4];
-		float ugv_yaw;           //global variable to keep track of UAV
+		float   error[4],error_prev[4];
+		float   ugv_yaw;           //global variable to keep track of UAV
 		uint8_t isConstVel;		// Used for debugging - TODO: Remove for final code
   
 	public:
@@ -74,8 +74,8 @@ Tag_follow_class::Tag_follow_class()
 	t_prev_tag      = -10;
 	tag_in_sight    = false;           
 	LANDING_FLAG    = false;
-	joy_manual_mode = true;                   // note, we start of in default value of manual mode.
 	joy_automode    = false;
+	joy_manual_mode = true;                   // note, we start of in default value of manual mode.
 	this->twist_auto.linear.x  = this->twist_auto.linear.y  = this->twist_auto.linear.z  = 0;  //all the due initializations
 	this->twist_auto.angular.x = this->twist_auto.angular.y = this->twist_auto.angular.z = 0; 
 	
@@ -223,7 +223,7 @@ void Tag_follow_class::pidcontroller()
 		this->twist_auto.angular.x 	= 0;
 		this->twist_auto.angular.y 	= 0;
 	}
-	this->vel_x_kd<< " vykp: "<<this->vel_y_kp<< " vykd: "<<this->vel_y_kd << endl;
+	
 	publishtwist();
 }
 
