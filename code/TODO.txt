@@ -1,0 +1,7 @@
+Take yaw from the UGV and use it for relative orientation
+
+publish the land command when the height is significantly less
+
+hovering is point, but have a means to keep track of the object from bottom camera
+
+code for switching between the tracked object and the pid control loop.
