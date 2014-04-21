@@ -1,12 +1,19 @@
+%following piece of code is just to show how the gabor filter looks like
 
-
-[x,y]=meshgrid(-50:50,-50:50); sigma = 10; theta = pi/3; F = 0.04;         %need to tune these to suit our needs
-g_sigma = (1./(2*pi*sigma^2)).*exp(((-1).*(x.^2+y.^2))./(2*sigma.^2));     %gaussian
+[x,y]   = meshgrid(-50:50,-50:50); 
+sigma   = 10; 
+theta   = pi/3; 
+F       = 0.04;         
+g_sigma = (1./(2*pi*sigma^2)).*exp(((-1).*(x.^2+y.^2))./(2*sigma.^2));     
 real_g  = g_sigma.*cos((2*pi*F).*(x.*cos(theta)+y.*sin(theta)));           %real and img part of gaussian
 im_g    = g_sigma.*sin((2*pi*F).*(x.*cos(theta)+y.*sin(theta)));
 
 figure;
-imagesc([real_g im_g]);colormap('gray');axis image;
+
+imagesc([real_g im_g]);
+colormap('gray');
+axis image;
+
 title('real and imaginary parts of a Gabor filter');
 
 
@@ -27,8 +34,8 @@ image1 = read(movie_obj,1);
 image1 = im2double(image1(:,:,1)); %all data bw 0 & 1
 hgram  = imhist(im2double(image1(:,:,1)));
 
-image2 = read(movie_obj,2);
-image2 = im2double(image2(:,:,1));
+image2  = read(movie_obj,2);
+image2  = im2double(image2(:,:,1));
 image2  = histeq(image2,hgram);
 
 
