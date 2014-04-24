@@ -39,8 +39,9 @@ struct imgMaterial
   Mat main_tag[2];
   Mat arrow[8];
   Mat battery[2];
-  Mat arm[10];  // subject to change
+  Mat arm[12];  // subject to change
   Mat sonar[10]; // subject to change
+  Mat main[4];
   string currLocation;
   
  
@@ -83,12 +84,20 @@ struct imgMaterial
     arrow[6] = imread(currLocation+"icons/arrow_turn_cw.jpg");
     arrow[7] = imread(currLocation+"icons/arrow_turn_ccw.jpg");
     battery[0] = imread(currLocation+"icons/battery_uav.jpg");
+    battery[1] = imread(currLocation+"icons/battery_ugv.jpg");
     arm[0] = imread(currLocation+"icons/arm_bg.jpg");
     arm[1] = imread(currLocation+"icons/arm_link.png",-1);
     //arm[2] & arm[3] will be rotated arm[1]
     arm[4] = imread(currLocation+"icons/arm_bg_empty.png",-1);
     arm[5] = imread(currLocation+"icons/arm_reset.jpg");
     arm[6] = imread(currLocation+"icons/button_temp.png",-1);
+    arm[7] = imread(currLocation+"icons/arm_survey.jpg");
+    arm[8] = imread(currLocation+"icons/arm_grasp.jpg");
+    arm[9] = imread(currLocation+"icons/arm_open.jpg");
+    arm[10] = imread(currLocation+"icons/arm_close.jpg");
+
+    main[0] = imread(currLocation+"icons/main_approach.jpg");
+    main[1] = imread(currLocation+"icons/main_snapshot.jpg");
 
     sonar[0] = imread(currLocation+"icons/sonar_bg.jpg");
     sonar[1] = imread(currLocation+"icons/sonar_dot.png",-1);
@@ -102,21 +111,24 @@ struct bttnState
 { int main_state;
   int full_state;
   int arm_state;
-  bool arm_reset;
+  int arm_setPosition;
   int setting_state;
   int quit_state;
   bool quit_GUI;
   int window_state;
   int full_LR;
+  bool uav_video;
+  bool auto_approach;
   //these two are for protruding the arm
   bool pro_forward;
   bool pro_backward;
+  bool main_snapshot;
   
   bttnState()
   { main_state = 2;
     full_state = 0;
     arm_state = 0;
-    arm_reset = 0;
+    arm_setPosition = 0;
     setting_state = 0;
     quit_state = 0;
     quit_GUI = 0;
@@ -124,6 +136,9 @@ struct bttnState
     full_LR = 0;
     pro_forward = 0;
     pro_backward = 0;
+    uav_video = 0;
+    auto_approach = 0;
+    main_snapshot = 0;
   }
   ~bttnState() {}
 };

@@ -67,6 +67,10 @@ void mouseEvent(int event, int x, int y, int flags, void *param){
     { tempState.main_state = 1; }
   else if(tempState.main_state != 2 && !(x>0 && x<80 && y>0 && y<80))
     { tempState.main_state = 0; }
+  if(event == EVENT_LBUTTONDOWN && x>620 && x<1246 && y>80 && y<404)
+    { tempState.uav_video = !(tempState.uav_video);
+      cout << tempState.uav_video << endl;
+    }
 //2. Full Screen
   if(event == EVENT_LBUTTONDOWN && x>0 && x<80 && y>80 && y<160)
     { tempState.main_state = 0;    tempState.full_state = 2; 
@@ -115,7 +119,22 @@ void mouseEvent(int event, int x, int y, int flags, void *param){
 //Reset arm position   
   if(tempState.window_state==2)
     { if(event == EVENT_LBUTTONDOWN && x>425 && x<575 && y>95 && y<145)
-        { tempState.arm_reset = 1; cout << "reset arm" << endl; }
+        { tempState.arm_setPosition = 1; cout << "reset arm" << endl; }
+      if(event == EVENT_LBUTTONDOWN && x>110 && x<335 && y>580 && y<660)
+        { tempState.arm_setPosition = 2; cout << "survey position" << endl; }
+      if(event == EVENT_LBUTTONDOWN && x>365 && x<590 && y>580 && y<660)
+        { tempState.arm_setPosition = 3; cout << "grasp position" << endl; }
+      if(event == EVENT_LBUTTONDOWN && x>110 && x<335 && y>688 && y<768)
+        { tempState.arm_setPosition = 4; cout << "gripper open" << endl; }
+      if(event == EVENT_LBUTTONDOWN && x>365 && x<590 && y>688 && y<768)
+        { tempState.arm_setPosition = 5; cout << "gripper close" << endl; }
+    }
+//Buttons on the main page  
+  if(tempState.window_state==0)
+    { if(event == EVENT_LBUTTONDOWN && x>110 && x<335 && y>580 && y<660)
+        { tempState.auto_approach = 1; cout << "auto approach" << endl; }
+      if(event == EVENT_LBUTTONDOWN && x>365 && x<590 && y>580 && y<660)
+        { tempState.main_snapshot = 1; cout << "take snapshot" << endl; }
     }
     
   *(bttnState*)param = tempState;
@@ -167,6 +186,11 @@ Point pointOnRadar(float y, float x){
   int radius = 6; //3.42m for now
   int radar_x = int(-240*x/radius)+350-11;
   int radar_y = int(-240*y/radius)+320-11;
+
+  if(radar_x<110||radar_x>590||radar_y<80||radar_y>560){
+    radar_x = 1;
+    radar_y = 1;
+  }
 
   return Point(radar_x,radar_y);
 }

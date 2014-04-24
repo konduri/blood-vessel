@@ -5,13 +5,15 @@
 #include <dynamic_reconfigure/server.h>
 #include <ardrone_tagfollow/dynamicConfig.h>
 #include <math.h>
+#include <cstdlib>
+
 
 #define errorIdxX 	0      // defined for array elements. eg error[errorIsxX] = error[0]. For better readibility
 #define errorIdxY 	1
 #define errorIdxYaw	2
 #define errorIdxZ	3
 #define movementPID	0
-#define PI 3.141592653589793
+#define PI              3.141592653589793
 
 using namespace std;
 
@@ -35,7 +37,7 @@ class Tag_follow_class
 		bool LANDING_FLAG;		// Flag is true when we press button for it to land
 		bool joy_manual_mode;   // To keep drone in manual mode, helps in swtiching from pid to manual mostly
 
-		float goal_x, goal_y, goal_yaw,SET_HEIGHT;		// the goal positon for our PID, in our case the center of image (320,160,0,1700)
+		float goal_x, goal_y, goal_yaw,SET_HEIGHT,CURRENT_HEIGHT,battery;		// the goal positon for our PID, in our case the center of image (320,160,0,1700)
 		
 		void joy_callback(const sensor_msgs::Joy::ConstPtr& msg);    //call back funtion for the subscriptions we have made
 		void nav_callback(const ardrone_autonomy::NavdataConstPtr& nav_msg);
@@ -47,24 +49,26 @@ class Tag_follow_class
 		
 		void pidcontroller();
 		float   error[4],error_prev[4];
-		float   ugv_yaw;           //global variable to keep track of UAV
-		uint8_t isConstVel;		// Used for debugging - TODO: Remove for final code
+		float   ugv_yaw;        //global variable to keep track of UAV
+		uint8_t isConstVel;	// Used for debugging - TODO: Remove for final code
   
 	public:
-		Tag_follow_class();		//only the constructor is public
+		Tag_follow_class();	//only the constructor is public
 		void configCallback(ardrone_tagfollow::dynamicConfig &config, uint32_t level);
 };
 
 Tag_follow_class::Tag_follow_class()
 {
 	ROS_INFO("Tag_follow start");
-    this->SET_HEIGHT  = 1700;                // default height of pid to be at 1700
+        this->SET_HEIGHT    = 2023;    // default height of pid to be at 1700
+	this->CURRENT_HEIGHT= 2023;    //Initializa it to some value, and when navdata comes over, it will replace this   
 	this->t_last =ros::Time::now().toSec();  //initialized the time_last to the time at which we start the system.
-	
+ 	this->battery       = 100.0; 	
 	this->joy_sub       = this->nh.subscribe("joy", 1, &Tag_follow_class::joy_callback, this);
 	this->nav_sub       = this->nh.subscribe("/ardrone/navdata", 1, &Tag_follow_class::nav_callback, this);
 	this->joy_drone_sub = this->nh.subscribe("/cmd_vel_drone", 1, &Tag_follow_class::joy_drone_callback, this);
 	this->ugv_yaw_sub   = this->nh.subscribe("/ugv_node/euler_yaw",1,&Tag_follow_class::Rosaria_pose_callback,this);		// TODO: change to 'pose'
+
 	
 	this->vel_pub       = this->nh.advertise<geometry_msgs::Twist>("/cmd_vel_tester", 1);
 	this->err_pub       = this->nh.advertise<geometry_msgs::Twist>("/pid_tune_err", 1);
@@ -102,11 +106,10 @@ void Tag_follow_class::joy_callback(const sensor_msgs::Joy::ConstPtr& msg)
 		if(!this-> LANDING_FLAG)    {
 			this->LANDING_FLAG = true; 
 			cout << "landing button pressed \n"; }}
-		
 
 	if(msg->buttons[0] == 1)  	    {	    // button A, for takeoff
 		if(this-> LANDING_FLAG)     {
-			this->SET_HEIGHT = 1700;
+			this->SET_HEIGHT = 2023;
 			this->LANDING_FLAG = false;
 			cout << "takeoff button pressed \n";}}
 }
@@ -114,9 +117,10 @@ void Tag_follow_class::joy_callback(const sensor_msgs::Joy::ConstPtr& msg)
 void Tag_follow_class::nav_callback(const ardrone_autonomy::NavdataConstPtr& nav_msg)
 {
 	// we are checking all the errors and wether we are detecting tag in this call back
-	this->error[errorIdxZ]  = this -> SET_HEIGHT - nav_msg -> altd;	 // Distance in millimeters
+	this->error[errorIdxZ]      = this -> SET_HEIGHT - nav_msg -> altd;	 // Distance in millimeters
 	this->twist_error.linear.z  = this -> error[errorIdxZ];  
-	
+        this->CURRENT_HEIGHT        = nav_msg -> altd;	
+	this->battery               = nav_msg -> batteryPercent;
 	if(!nav_msg->tags_width.empty()) 
 	{
 		this->ugv_yaw = this->thrust_kd;
@@ -127,8 +131,6 @@ void Tag_follow_class::nav_callback(const ardrone_autonomy::NavdataConstPtr& nav
 		this->error[errorIdxYaw] = 0;// (180*(PI+this->ugv_yaw)/PI) - (nav_msg->rotZ+180);  //****************************************** i am also assuming the data from navdata is set in range of 0 to 360
 		// cout <<"value of data are "<<180*(PI+this->ugv_yaw)/PI<< " and "<<nav_msg->rotZ+180 << "and error is"<<this->error[errorIdxYaw] <<"\n";
         // As of now, yaw always in control of operator
-
-
 		this->twist_error.linear.x  = this ->error[errorIdxX];
 		this->twist_error.linear.y  = this ->error[errorIdxY];
 		this->twist_error.angular.x = 0;
@@ -138,6 +140,7 @@ void Tag_follow_class::nav_callback(const ardrone_autonomy::NavdataConstPtr& nav
 		pidcontroller();   //call pid once we have updated the values
 		this->t_last		= this->tnow; 
 		this->t_prev_tag	= this->tnow;
+		cout << "The value of the batter percentage observed is " << this->battery << "\n";
 		memcpy(this->error_prev, this->error,sizeof(this->error));
 	}
 	
@@ -168,6 +171,7 @@ void Tag_follow_class::joy_drone_callback(const geometry_msgs::Twist::ConstPtr& 
     this->twist_manual.angular.z = msg->angular.z;
     this->twist_auto.angular.z   = msg->angular.z;
 }
+				
 
 void Tag_follow_class::Rosaria_pose_callback(const geometry_msgs::Twist::ConstPtr& msg)
 {
@@ -202,13 +206,18 @@ void Tag_follow_class::pidcontroller()
 		
 		//cout << "the error value of yaw is " << error[errorIdxYaw]  << " and the difference of error is " <<this->error[errorIdxYaw] - this-> error_prev[errorIdxYaw]  << "and the velocity is " << this->twist_auto.angular.z <<"\n" ;
 		if (this->LANDING_FLAG)         {  
-			if (this->SET_HEIGHT > 200) {    //we reduce the height of pid until height is 200mm. this causes slow decrease of height.
+			if (this->SET_HEIGHT > 150) {  //we reduce the height of pid until height is 200mm. this causes slow decrease of height
+				cout << "Initiated landing sequece. Set_height value now" << this->SET_HEIGHT <<"\n";
+				cout << "Current height that has been found to be \n " << this->CURRENT_HEIGHT <<"\n";
 				this->SET_HEIGHT = this->SET_HEIGHT - 2; }}
-			
 
-		if ((this->error[errorIdxZ] < 200) && (LANDING_FLAG ==true) && this->tag_in_sight == true)  
+		if ((this->CURRENT_HEIGHT < 700) && (LANDING_FLAG ==true) && this->tag_in_sight == true)   
 		{
 			cout << "Emergency land loop \n";       //TODO edit this loop so that we dont chuck out the joy message from joystick. 
+		//	system("rostopic pub -1 /joy sensor_msgs/Joy '[axes: [0.0, -0.0, 0.0, -0.0, 0.0, 0.0, -0.0, 0.0],buttons: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]]'");
+system("rostopic pub -1 /joy sensor_msgs/Joy '{header: {seq: 1000, stamp: {secs: 100000, nsecs: 3000}, frame_id: 'abc'}, axes: [0.0, -0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], buttons: [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]}'");
+			cout << "we should have pressed the landing buttone";
+//rostopic pub -1 /cmd_vel_pioneer geometry_msgs/Twist '{linear:  {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}'
 			//sensor_msgs::Joy landing_message;
 			//ros::Publisher joy_land_msg;
 			//landing_message.buttons[1] = 1;
@@ -217,7 +226,7 @@ void Tag_follow_class::pidcontroller()
 		}
 
 
-		this->twist_auto.linear.z = this->thrust_kp	* this->error[errorIdxZ] + /*(this->thrust_kd)*/0 * ( this->error[errorIdxZ] - this->error_prev[errorIdxZ]) / (this->tnow - this->t_last);
+		this->twist_auto.linear.z = (this->thrust_kp*1.4)*this->error[errorIdxZ] + /*(this->thrust_kd)*/0 * ( this->error[errorIdxZ] - this->error_prev[errorIdxZ]) / (this->tnow - this->t_last);
 		//note, simple p control for the height of drone
 		// cout << "pid value of the angular z" << this->twist_auto.linear.z;
 		this->twist_auto.angular.x 	= 0;
@@ -238,7 +247,11 @@ void Tag_follow_class::configCallback(ardrone_tagfollow::dynamicConfig &config, 
 	this->yaw_kp    = config.yaw_kp;
 	this->yaw_kd    = config.yaw_kd;
 	this->thrust_kp = config.thrust_kp;
-	this->thrust_kd = config.thrust_kd;
+	if (this->LANDING_FLAG == false)
+	{
+		this->thrust_kd  = config.thrust_kd;
+		this->SET_HEIGHT = config.thrust_kd; 
+	}
 }
 
 
