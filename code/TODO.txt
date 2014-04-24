@@ -5,3 +5,5 @@ publish the land command when the height is significantly less
 hovering is point, but have a means to keep track of the object from bottom camera
 
 code for switching between the tracked object and the pid control loop.
+
+use the data from the tracker to give position of the bomb
