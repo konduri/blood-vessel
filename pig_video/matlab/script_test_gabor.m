@@ -298,6 +298,22 @@ imshow(mean(edge_struct,3))
 save('edges.mat','edge_struct')
 
 
+%%
+im = read(movie_obj,1);
+sz = size(im(:,:,1))
+edge_struct = uint8(zeros(sz(1), sz(2), nFrames));
+for i = 1:nFrames
+    im = read(movie_obj,i);
+    im          = im(:,:,1);
+    temp        = edge(medfilt2(im,[25 25]),'canny');
+    edge_struct(:,:,i) = temp;
+    i
+end
+    %%
+imshow(mean(edge_struct,3))
+save('edges.mat','edge_struct')
+
+
 
 
 

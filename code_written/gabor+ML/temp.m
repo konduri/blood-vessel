@@ -1,10 +1,18 @@
-[x,y]=meshgrid(-50:50,-50:50); sigma = 10; theta = pi/3; F = 0.04;
+%The following piece of code is to show how the gabor filter looks like
+
+[x,y]   = meshgrid(-50:50,-50:50); 
+sigma   = 10; 
+theta   = pi/3; 
+F       = 0.04;
 g_sigma = (1./(2*pi*sigma^2)).*exp(((-1).*(x.^2+y.^2))./(2*sigma.^2));
-real_g = g_sigma.*cos((2*pi*F).*(x.*cos(theta)+y.*sin(theta)));
-im_g = g_sigma.*sin((2*pi*F).*(x.*cos(theta)+y.*sin(theta)));
+real_g  = g_sigma.*cos((2*pi*F).*(x.*cos(theta)+y.*sin(theta)));
+im_g    = g_sigma.*sin((2*pi*F).*(x.*cos(theta)+y.*sin(theta)));
 
 figure;
-imagesc([real_g im_g]);colormap('gray');axis image;
+imagesc([real_g im_g]);
+colormap('gray');
+axis image;
+
 title('real and imaginary parts of a Gabor filter');
 
 
