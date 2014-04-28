@@ -13,11 +13,8 @@ readerobj = VideoReader('../upmc-ss_pigs-pig_ss15-20131118-105514113.avi');
 % readerobj = VideoReader(my_filename);
 % Read in all video frames.
 vidFrames = read(readerobj);
-
 % Get the number of frames.
 numFrames = get(readerobj, 'NumberOfFrames');
-
-
 %% read in a small video from matlab
 %  readerobj = VideoReader('xylophone.mpg', 'tag', 'myreader1');
 %  vidFrames = read(readerobj);
