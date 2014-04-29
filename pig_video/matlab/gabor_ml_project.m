@@ -1,13 +1,9 @@
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%From here we can write the actual code forthe problem, assuming that we
-%now have the ground truths and stuff
 movie_obj = VideoReader('upmc-ss_pigs-pig_ss15-20131118-105514113.avi');
 nFrames   = movie_obj.NumberOfFrames;
 %%
 image1      = read(movie_obj,1);
 image1      = im2double(image1(:,:,1)); %all data bw 0 & 1
 image1      = (image1-mean(image1(:)))./sqrt(var(image1(:)));
-
 %image_mean   = (image_orig-mean(image_orig(:))) ./ sqrt(var(image_orig(:)));
 %%
 scale       = 0.5; 
