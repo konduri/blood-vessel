@@ -4,11 +4,11 @@ movie_obj = VideoReader('upmc-ss_pigs-pig_ss15-20131118-105514113.avi');
 nFrames   = movie_obj.NumberOfFrames;
 %%
 %Filters that you will be using, various parameters of Gabor filters
-scale              = 1;
+scale              = 0.5;
 filter_size        = 40.*scale;
 filter_size_halfed = round((filter_size)/2);
 Fs                 = 0.1;                   %frequencies
-sigmas             = [1:0.5:3].*scale;                  %sigmas used
+sigmas             = [1:0.5:8].*scale;                  %sigmas used
 thetas             = pi/8:pi/8:pi+pi/8;               % orientations
 no_filters   = numel(sigmas)*numel(Fs)*numel(thetas); %number of filters used 
 
@@ -40,19 +40,19 @@ imag_filters = single(imag_filters);
 %%
 load('training_data.mat','training_img'); %should contain images, and truth
 training_img = single(training_img);
-training_img = training_img(584:end,1:1350,:);
+% training_img = training_img(584:end,1:1350,:);
 %%
 h1    = figure;
 count = 0;
 tr_img       = training_img(:,:,1);
-% tr_img       = imresize(training_{1},0.25);   %#################
+tr_img       = imresize(tr_img,scale);   %#################
 features     = single(zeros([size(tr_img,1) size(tr_img,2) no_filters])); %vairable used to store features
 
 %%
 for i = 1:size(training_img,3)
     tr_img = training_img(:,:,i);
     tr_img = single(mat2gray(tr_img));
-%     tr_img = imresize(tr_img,0.25);  % ################################
+    tr_img = imresize(tr_img,0.5);  % ################################
     tr_img = (tr_img-mean(tr_img(:)))./sqrt(var(tr_img(:)));
     for loop =  1:no_filters
         count = count + 1;
@@ -83,13 +83,15 @@ features = reshape(features,[prod(szG(1:2)),prod(szG(3:end))]);
 % fit GLM with the features and the location of the vessels
 load('training_data.mat','training_ans');
 %%
-training_ans = training_ans(584:end,1:1350,:);
+% training_ans = training_ans(584:end,1:1350,:);
+training_ans = imresize(training_ans,0.25);
 sz           = size(training_ans);
 temp         = sum(training_ans,3);
 training_ans = [reshape(temp,[sz(1)*sz(2) 1]) sz(3)*ones([sz(1)*sz(2) 1])];
 %%
 clear temp; 
-b        = glmfit(features,training_ans,'normal');  
+%%
+b        = glmfit(features,training_ans(:,1),'normal');  
 %%
 clear training_ans
 %%

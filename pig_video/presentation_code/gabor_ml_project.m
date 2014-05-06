@@ -6,10 +6,10 @@ image1      = im2double(image1(:,:,1)); %all data bw 0 & 1
 image1      = (image1-mean(image1(:)))./sqrt(var(image1(:)));
 %image_mean   = (image_orig-mean(image_orig(:))) ./ sqrt(var(image_orig(:)));
 %%
-scale       = 0.5; 
-trainingImg = image1(936:1638,1:1100);
-trainingAns = im2double(imread('train_ans_small.png'));
-trainingAns = trainingAns(1:end-3,:);                                      %% make sure that for new ground truth this is not a problem
+scale       = 1; 
+trainingImg = image1(584:end,1:1350);
+trainingAns = im2double(imread('mask_1.bmp'));
+trainingAns = trainingAns(584:end,1:1350);                                      %% make sure that for new ground truth this is not a problem
 trainingAns = imresize(trainingAns,scale,'nearest');
 trainingImg = imresize(trainingImg,scale,'nearest');    %testing image will come later
 
@@ -75,7 +75,7 @@ szG      = size(features);
 features = reshape(features,[prod(szG(1:2)),prod(szG(3:end))]);
 %%
 % fit GLM with the features and the location of the vessels
-b = glmfit(features,trainingAns(:),'binomial');  
+b = glmfit(features,trainingAns(:),'normal');  
 
 %%
 % see the output of the model based on the training features
@@ -88,16 +88,16 @@ imagesc([trainingImg trainingAns CTrain]);
 colormap('gray');axis image;
 title('testing image, answer, output from GLM');
 %%
-
-mean_seg = zeros(352,550);
-final    = zeros(352,550,150);
+sze = size(trainingAns);
+mean_seg = zeros(sze);
+final    = zeros([sze(1) sze(2) 150]);
 figure
 for n = 1:150
     image2 = read(movie_obj,n);
     image2 = im2double(image2(:,:,1));
 %     image2  = histeq(image2,hgram);
     image2      = (image2-mean(image2(:)))./sqrt(var(image2(:)));
-    testingImg  = image2(936:1638,1:1100);
+    testingImg  = image2(584:end,1:1350);
     testingImg  = imresize(testingImg ,scale,'nearest');
     
     features = zeros([size(testingImg),numel(sigmas),numel(thetas),numel(Fs)]);
@@ -114,11 +114,12 @@ szG = size(features);
 features = reshape(features,[prod(szG(1:2)),prod(szG(3:end))]);
 Ctest    = glmval(b,features,'logit');
 Ctest    = reshape(Ctest,szG(1:2));
-seg = Ctest > 0.519;
+% seg = Ctest > 0.53;
+seg = Ctest;
 seg = im2double(seg);
 size(seg);
 mean_seg = mean_seg + seg;    
-imshow(mean_seg./n)
+imagesc(mean_seg./n)
 drawnow
 n    
 end
